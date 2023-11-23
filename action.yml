@@ -1,0 +1,214 @@
+name: 'CICD for Saagie Platform'
+description: 'Upgrade jobs or/and pipelines on Saagie Platform'
+inputs:
+  action:
+    description: 'What you want to do with Saagie Platform. Available values: package_job, update_job, update_pipeline,
+                  update. Default value: update'
+    required: false
+    default: 'update'
+  saagie_url:
+    description: 'URL of the Saagie Platform'
+    required: false
+  saagie_user:
+    description: 'User to connect to Saagie Platform'
+    required: false
+  saagie_pwd:
+    description: 'Password to connect to Saagie Platform'
+    required: false
+  saagie_realm:
+    description: 'Realm to connect to Saagie Platform'
+    required: false
+  saagie_env:
+    description: 'Environment to connect to Saagie Platform'
+    required: false
+  debug_mode:
+    description: 'Debug mode'
+    required: false
+  job_config_folder:
+    description: 'Folder where the job config files are stored'
+    required: false
+    default: 'saagie/jobs/*.json'
+  pipeline_config_folder:
+    description: 'Folder where the pipeline config files are stored'
+    required: false
+    default: 'saagie/pipelines/*.json'
+  env_config_folder:
+    description: 'Folder where the env config files are stored'
+    required: false
+    default: './saagie/envs/*.json'
+  job_source_folder:
+    description: 'Folder where the job source code files are stored'
+    required: false
+    default: './code/jobs/*/*'
+  pipeline_source_folder:
+    description: 'Folder where the pipeline source code files are stored'
+    required: false
+    default: './code/pipelines/*.yaml'
+  artefact_code_folder:
+    description: 'Folder where the artefact code files are stored'
+    required: false
+    default: './dist/*/*'
+
+outputs:
+  time: # id of output
+    value: ${{ steps.time.outputs.time }} # reference output value by id
+    description: 'The time we finish to run all actions'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+
+    - name: setup python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10' # install the python version needed
+
+    - name: install required python librairies
+      run: |
+        python -m pip install --upgrade pip 
+        pip install -r cicd_saagie_tool/requirements.txt
+      shell: bash
+
+    - name: Get specific changed files
+      id: changed-files-specific
+      uses: tj-actions/changed-files@v37 # check if we have file changed
+      with:
+        files_yaml: |
+          jobs:
+            - ${{inputs.job_config_folder}}
+          pipelines:
+            - ${{inputs.pipeline_config_folder}}
+            - ${{inputs.pipeline_source_folder}}
+
+    - name: Run changed-files with dir_names
+      id: changed-files-dir-names
+      uses: tj-actions/changed-files@v37
+      with:
+        dir_names: "true"
+        files_yaml: |
+          source_code:
+            - ${{inputs.job_source_folder}}
+          artefact_code:
+            - ${{inputs.artefact_code_folder}}
+
+    - name: Get action
+      run: |
+        echo "Action selected: ${{inputs.action}}"
+      shell: bash
+
+    - name: Get debug mode
+      id: debug_mode
+      run: |
+        echo "Debug mode: ${{inputs.debug_mode}}"
+        if [[ "${{inputs.debug_mode}}" == "true" ]]; then
+          echo "Debug mode is activated"
+          echo "debug_mode=--debug" >> $GITHUB_OUTPUT
+        else
+          echo "Debug mode is not activated"
+          echo "debug_mode=" >> $GITHUB_OUTPUT
+        fi
+      shell: bash
+
+    - name: Get changed job config file
+      id: changed_jobs_config
+      run: |
+        changed_file_array_config=()
+        for file in ${{ steps.changed-files-specific.outputs.jobs_all_changed_files }}; do
+          echo "$file was modified"
+          file_name=$(basename ${file})
+          file_name_without_ext=${file_name%.*}
+          changed_file_array_config+=($file_name_without_ext)
+        done
+        echo "changed_file_array_config=${changed_file_array_config[@]}" >> $GITHUB_OUTPUT
+        echo "changed_file_array_config=${changed_file_array_config[@]}"
+      shell: bash
+
+    - name: Get changed job source code and artefact
+      id: changed_jobs_source_code
+      run: |
+        changed_file_array_source=()
+        for file in ${{ steps.changed-files-dir-names.outputs.source_code_all_changed_files }}; do
+          echo "$file was modified"
+          dir_name=$(basename ${file})
+          echo "$dir_name"
+          changed_file_array_source+=($dir_name)
+        done
+        for file in ${{ steps.changed-files-dir-names.outputs.artefact_code_all_changed_files }}; do
+          echo "$file was modified"
+          dir_name=$(basename ${file})
+          echo "$dir_name"
+          changed_file_array_source+=($dir_name)
+        done
+        echo "changed_file_array_source=${changed_file_array_source[@]}" >> $GITHUB_OUTPUT
+        echo "changed_file_array_source=${changed_file_array_source[@]}"
+      shell: bash
+
+    - name: Get unique jobs files changed
+      id: unique_jobs_files_changed
+      run: |
+        changed_file_array=()
+        echo "changed_file_array_config: ${{ steps.changed_jobs_config.outputs.changed_file_array_config }}"
+        changed_file_array+=(${{ steps.changed_jobs_config.outputs.changed_file_array_config }})
+        echo "changed_file_array_source: ${{ steps.changed_jobs_source_code.outputs.changed_file_array_source }}"
+        changed_file_array+=(${{ steps.changed_jobs_source_code.outputs.changed_file_array_source }})
+        unique_files=($(echo "${changed_file_array[@]}" | tr ' ' '\n' | sort -u))
+        
+        if [ -z "${unique_files[*]}" ]; then
+          echo "No files changed"
+          echo "job_changes=false" >> $GITHUB_OUTPUT
+        else
+          sorted_unique_files=$(IFS=$'\n'; echo "${unique_files[*]}" | tr '\n' ' ')
+          echo "unique changed files: $sorted_unique_files"
+          echo "changed_file=${sorted_unique_files[@]}" >> $GITHUB_OUTPUT
+          echo "job_changes=true" >> $GITHUB_OUTPUT
+        fi
+
+      shell: bash
+    
+
+    - name: Run package job
+      if: ${{ steps.unique_jobs_files_changed.outputs.job_changes == 'true' && (inputs.action == 'update' || inputs.action == 'package_job') }}
+      run: |
+        echo "Package job"
+        echo "changed_file=${{ steps.unique_jobs_files_changed.outputs.changed_file }}"
+        for file in ${{ steps.unique_jobs_files_changed.outputs.changed_file }}; do
+          echo "$file would be updated"
+          echo "the following command would be run: [python cicd_saagie_tool/__main__.py --action package_job --job_name ${file} --job_config_folder ${{inputs.job_config_folder}} --env_config_folder ${{inputs.env_config_folder}} --artefact_code_folder $${{inputs.artefact_code_folder}} ${{ steps.debug_mode.outputs.debug_mode }}]"
+          python cicd_saagie_tool/__main__.py --action package_job --job_name ${file} --job_config_folder "${{inputs.job_config_folder}}" --env_config_folder "${{inputs.env_config_folder}}" --artefact_code_folder "$${{inputs.artefact_code_folder}}" ${{ steps.debug_mode.outputs.debug_mode }}
+        done
+      shell: bash
+
+    - name: Run update job
+      if:  ${{ steps.unique_jobs_files_changed.outputs.job_changes == 'true' && (inputs.action == 'update' || inputs.action == 'update_job') }}
+      run: |
+        echo "Update job"
+        for file in ${{ steps.unique_jobs_files_changed.outputs.changed_file }}; do
+          echo "$file would be updated"
+          echo "the following command would be run: [python cicd_saagie_tool/__main__.py --action update_job --job_name ${file} --saagie_url ${{inputs.saagie_url}} --saagie_user ${{inputs.saagie_user}} --saagie_pwd ${{inputs.saagie_pwd}} --saagie_realm ${{inputs.saagie_realm}} --saagie_env ${{inputs.saagie_env}} --job_config_folder ${{inputs.job_config_folder}} --env_config_folder ${{inputs.env_config_folder}} ${{ steps.debug_mode.outputs.debug_mode }}]"
+          python cicd_saagie_tool/__main__.py --action update_job --job_name ${file} --saagie_url "${{inputs.saagie_url}}" --saagie_user "${{inputs.saagie_user}}" --saagie_pwd "${{inputs.saagie_pwd}}" --saagie_realm "${{inputs.saagie_realm}}" --saagie_env "${{inputs.saagie_env}}" --job_config_folder "${{inputs.job_config_folder}}" --env_config_folder "${{inputs.env_config_folder}}" ${{ steps.debug_mode.outputs.debug_mode }}
+        done
+      shell: bash
+
+    - name: Run step if any of the pipelines files above change
+      if: ${{ steps.changed-files-specific.outputs.pipelines_any_changed == 'true' && (inputs.action == 'update' || inputs.action == 'update_pipeline') }}
+      # then it will update on Saagie
+      run: |
+        echo "Get unique pipelines files changed"
+        changed_file_array=()
+        for file in ${{ steps.changed-files-specific.outputs.pipelines_all_changed_files }}; do
+          echo "$file was modified"
+          file_name=$(basename ${file})
+          file_name_without_ext=${file_name%.*}
+          changed_file_array+=($file_name_without_ext)
+        done
+        unique_files=($(echo "${changed_file_array[@]}" | tr ' ' '\n' | sort -u))
+        echo "unique changed files: $unique_files"
+        echo "Update pipelines"
+        for file_name_without_ext in ${unique_files}; do
+          echo "the following command would be run: [python cicd_saagie_tool/__main__.py --action update_pipeline --pipeline_name ${file_name_without_ext} --saagie_url ${{inputs.saagie_url}} --saagie_user ${{inputs.saagie_user}} --saagie_pwd ${{inputs.saagie_pwd}} --saagie_realm ${{inputs.saagie_realm}} --saagie_env ${{inputs.saagie_env}} --pipeline_config_folder ${{inputs.pipeline_config_folder}} --env_config_folder ${{inputs.env_config_folder}} ${{ steps.debug_mode.outputs.debug_mode }}]"
+          python cicd_saagie_tool/__main__.py --action update_pipeline --pipeline_name ${file_name_without_ext} --saagie_url "${{inputs.saagie_url}}" --saagie_user "${{inputs.saagie_user}}" --saagie_pwd "${{inputs.saagie_pwd}}" --saagie_realm "${{inputs.saagie_realm}}" --saagie_env "${{inputs.saagie_env}}" --pipeline_config_folder "${{inputs.pipeline_config_folder}}" --env_config_folder "${{inputs.env_config_folder}}" ${{ steps.debug_mode.outputs.debug_mode }}
+        done
+      shell: bash
+
