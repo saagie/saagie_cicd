@@ -166,7 +166,7 @@ runs:
         fi
 
       shell: bash
-    
+
 
     - name: Run package job
       if: ${{ steps.unique_jobs_files_changed.outputs.job_changes == 'true' && (inputs.action == 'update' || inputs.action == 'package_job') }}
@@ -176,7 +176,7 @@ runs:
         for file in ${{ steps.unique_jobs_files_changed.outputs.changed_file }}; do
           echo "$file would be updated"
           echo "the following command would be run: [python cicd_saagie_tool/__main__.py --action package_job --job_name ${file} --job_config_folder ${{inputs.job_config_folder}} --env_config_folder ${{inputs.env_config_folder}} --artefact_code_folder $${{inputs.artefact_code_folder}} ${{ steps.debug_mode.outputs.debug_mode }}]"
-          python cicd_saagie_tool/__main__.py --action package_job --job_name ${file} --job_config_folder "${{inputs.job_config_folder}}" --env_config_folder "${{inputs.env_config_folder}}" --artefact_code_folder "$${{inputs.artefact_code_folder}}" ${{ steps.debug_mode.outputs.debug_mode }}
+          python cicd_saagie_tool/__main__.py --action package_job --job_name ${file} --job_config_folder "${{inputs.job_config_folder}}" --env_config_folder "${{inputs.env_config_folder}}" --artefact_code_folder "${{inputs.artefact_code_folder}}" ${{ steps.debug_mode.outputs.debug_mode }}
         done
       shell: bash
 
