@@ -30,7 +30,6 @@ jobs:
           saagie_pwd: ${{ secrets.SAAGIE_PASSWORD }}
           saagie_realm: ${{ secrets.SAAGIE_REALM }}
           saagie_env: ${{ secrets.SAAGIE_ENV }}
-          debug_mode: 'true'  # Optional, deactivated by default, if you set to something different of '' then it activates debug mode
           job_config_folder: 'saagie/jobs/*.json'  # Folder where job config files are stored
           pipeline_config_folder: 'saagie/pipelines/*.json'  # Folder where pipeline config files are stored
           env_config_folder: './saagie/envs/*.json'  # Folder where env config files are stored
@@ -68,31 +67,31 @@ Environment to connect to the Saagie Platform.
 
 ### `debug_mode` (optional)
 
-Debug mode. Set to 'true' for debug mode.
+Debug mode. Deactivated by default, set to something different of `''` to activate debug mode
 
 ### `job_config_folder` (optional)
 
-Folder where the job config files are stored. Default: 'saagie/jobs/*.json'
+Folder where the job config files are stored. Default: `'saagie/jobs/*.json'`
 
 ### `pipeline_config_folder` (optional)
 
-Folder where the pipeline config files are stored. Default: 'saagie/pipelines/*.json'
+Folder where the pipeline config files are stored. Default: `'saagie/pipelines/*.json'`
 
 ### `env_config_folder` (optional)
 
-Folder where the env config files are stored. Default: './saagie/envs/*.json'
+Folder where the env config files are stored. Default: `'./saagie/envs/*.json'`
 
 ### `job_source_folder` (optional)
 
-Folder where the job source code files are stored. Default: './code/jobs/*/*'
+Folder where the job source code files are stored. Default: `'./code/jobs/*/*'`
 
 ### `pipeline_source_folder` (optional)
 
-Folder where the pipeline source code files are stored. Default: './code/pipelines/*.yaml'
+Folder where the pipeline source code files are stored. Default: `'./code/pipelines/*.yaml'`
 
 ### `artefact_code_folder` (optional)
 
-Folder where the artefact code files are stored. Default: './dist/*/*'
+Folder where the artefact code files are stored. Default: `'./dist/*/*'`
 
 ## Example
 
