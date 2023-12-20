@@ -1,4 +1,4 @@
-name: 'CICD for Saagie DataOps Platform'
+name: 'CICD action for Saagie DataOps Platform'
 description: 'Upgrade jobs or/and pipelines on Saagie Platform'
 branding:
   icon: 'refresh-cw'
