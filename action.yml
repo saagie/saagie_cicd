@@ -1,5 +1,8 @@
-name: 'CICD for Saagie Platform'
+name: 'CICD for Saagie DataOps Platform'
 description: 'Upgrade jobs or/and pipelines on Saagie Platform'
+branding:
+  icon: 'refresh-cw'
+  color: 'blue'
 inputs:
   action:
     description: 'What you want to do with Saagie Platform. Available values: package_job, update_job, update_pipeline,
