@@ -64,7 +64,7 @@ runs:
       uses: actions/checkout@v4
 
     - name: setup python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.10' # install the python version needed
 
@@ -76,7 +76,7 @@ runs:
 
     - name: Get specific changed files
       id: changed-files-specific
-      uses: tj-actions/changed-files@v37 # check if we have file changed
+      uses: tj-actions/changed-files@v42 # check if we have file changed
       with:
         files_yaml: |
           jobs:
@@ -87,7 +87,7 @@ runs:
 
     - name: Run changed-files with dir_names
       id: changed-files-dir-names
-      uses: tj-actions/changed-files@v37
+      uses: tj-actions/changed-files@v42
       with:
         dir_names: "true"
         files_yaml: |
