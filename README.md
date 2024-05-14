@@ -45,7 +45,7 @@ It provides a set of customizable options to enhance your jobs and pipelines on 
             uses: actions/checkout@v2
     
           - name: Saagie CICD Action
-            uses: <repository>/<action-name>@<release-tag>
+            uses: saagie/saagie_cicd_tool@<release-tag>
             with:
               action: 'update'  # Available values: package_job, update_job, update_pipeline, update. Default: update
               saagie_url: ${{ secrets.SAAGIE_URL }}
@@ -104,6 +104,16 @@ with:
   pipeline_source_folder: './code/pipelines/*.yaml'
   artefact_code_folder: './dist/*/*'
 ```
+
+
+### Compatibility with your Saagie platform
+
+| **Saagie platform version** | **saagie_cicd_tool release** |
+|-----------------------------|------------------------------|
+| >= 2023.03                  | =v0.0.1                      |
+| >= 2024.01                  | =v0.0.2                      |
+| >= 2024.02                  | =v0.0.3                      |
+
 
 ## License
 
