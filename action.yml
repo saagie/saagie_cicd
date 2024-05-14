@@ -207,9 +207,10 @@ runs:
           changed_file_array+=($file_name_without_ext)
         done
         unique_files=($(echo "${changed_file_array[@]}" | tr ' ' '\n' | sort -u))
-        echo "unique changed files: $unique_files"
+        echo "unique_files=${unique_files[@]}"
         echo "Update pipelines"
-        for file_name_without_ext in ${unique_files}; do
+        for file_name_without_ext in ${unique_files[@]}; do
+          echo "$file_name_without_ext would be updated"
           echo "the following command would be run: [python cicd_saagie_tool/__main__.py --action update_pipeline --pipeline_name ${file_name_without_ext} --saagie_url ${{inputs.saagie_url}} --saagie_user ${{inputs.saagie_user}} --saagie_pwd ${{inputs.saagie_pwd}} --saagie_realm ${{inputs.saagie_realm}} --saagie_env ${{inputs.saagie_env}} --pipeline_config_folder ${{inputs.pipeline_config_folder}} --env_config_folder ${{inputs.env_config_folder}} ${{ steps.debug_mode.outputs.debug_mode }}]"
           python cicd_saagie_tool/__main__.py --action update_pipeline --pipeline_name ${file_name_without_ext} --saagie_url "${{inputs.saagie_url}}" --saagie_user "${{inputs.saagie_user}}" --saagie_pwd "${{inputs.saagie_pwd}}" --saagie_realm "${{inputs.saagie_realm}}" --saagie_env "${{inputs.saagie_env}}" --pipeline_config_folder "${{inputs.pipeline_config_folder}}" --env_config_folder "${{inputs.env_config_folder}}" ${{ steps.debug_mode.outputs.debug_mode }}
         done
