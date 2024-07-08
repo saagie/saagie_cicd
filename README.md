@@ -14,7 +14,7 @@ It provides a set of customizable options to enhance your jobs and pipelines on 
 1. Create the following environment variables:
     - `SAAGIE_URL`: This is the URL of your Saagie platform.
     - `SAAGIE_USER`: This is the username of your Saagie account.
-    - `SAAGIE_PASSWORD`: This is the password of your Saagie account.
+    - `SAAGIE_PWD`: This is the password of your Saagie account.
     - `SAAGIE_REALM`: This is the [DNS prefix](https://docs.saagie.io/user/latest/admin/installation/system-requirements#install-sysreq-dns-entry) determined when Saagie was installed. The Realm allows you to connect to your Saagie platform.
 
      They will be used to make the connection with your Saagie platform. For more information on how to create environment variables, you can see:
